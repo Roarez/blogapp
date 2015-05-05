@@ -1,0 +1,14 @@
+extends layout
+
+block content
+  h1= title
+  p #{title} a post
+  form(name="write-post", method="post")
+    p Title:
+    input(type="text", name="title")
+    p Author:
+    input(type="text", name="author")
+    p Text:
+    textarea(name="post_text", cols="24", rows="6")
+    p
+    input(type="submit", value="Post")

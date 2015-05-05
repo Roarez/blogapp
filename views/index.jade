@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+  each post in posts
+    h2=post.title
+    h4=post.author
+    p=post.date
+    p=post.text
+  ul.pages
+    - var n = 0
+    while ++n <= pages
+      li
+        if n === currentPage
+          a(class='current')=n
+        else
+          a(href='/?page='+n)=n

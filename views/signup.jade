@@ -1,0 +1,12 @@
+extends layout
+
+block content
+  h1= title
+  p #{title} to view blog posts
+  form(name="sign-up", method="post")
+    p New username:
+    input(type="text", name="username")
+    p New password:
+    input(type="password", name="password")
+    p
+    input(type="submit", value="Sign up")

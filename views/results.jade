@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  h1= title
+  p #{title} for #{crit}: #{val}
+    each result in results
+        h2=result.title
+        h4=result.author
+        p=result.date
+        p=result.text

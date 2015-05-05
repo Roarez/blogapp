@@ -1,0 +1,25 @@
+extends layout
+
+block content
+  h1= title
+  p #{title} for posts
+  form(name="search-post", method="post")
+    p Search by:
+        input(type="radio", name="searchBy", value="title")
+        |Title
+        input(type="radio", name="searchBy", value="author")
+        |Author
+    p Value:
+        input(type="text", name="textValue")
+    p
+    input(type="radio", name="searchBy", value="dateInit")
+    | Search from a specific date
+    p Date:
+        input(type="text", name="initDate")
+    p
+    input(type="checkbox", name="hasEnd", value="true")
+    | to an end date
+    p End date:
+        input(type="text", name="endDate")
+    p
+    input(type="submit", value="Search")

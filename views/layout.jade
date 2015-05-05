@@ -1,0 +1,33 @@
+doctype html
+html
+  head
+    title= title
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    div#wrap
+        div.header-image
+            a(href="/")
+                img(src='/images/header.png')
+        div.navbar
+            div.container
+                ul.nav
+                    if username
+                        li
+                            a(href='/') Home
+                        li
+                            a(href='/write') Write
+                        li
+                            a(href='/search') Search
+                        li
+                            a(href='/logout') Logout
+                    else
+                        li
+                            a(href='/signin') Sign in
+        div.info
+            if username
+                p='Welcome '+username
+            else
+                p Welcome stranger
+        div.container
+            block content
+    script(src='/javascripts/main.js')
