@@ -1,40 +1,27 @@
-var level = require('level');
+var mongo = require('mongodb');
+var monk = require('monk');
 var bcrypt = require('bcrypt');
-var db = level('/tmp/blogdb');
-var udb = level('/tmp/blogusersdb',{createIfMissing: true});
+var db = monk('localhost:27017/blogapp');
+var postcol = db.get("posts");
+var usercol = db.get("users");
 
-function entryCounter(callback) {
-    var entries = 0;
-    db.createReadStream().on('data', function (data) {
-        entries++;
-    }).on('error', function (err) {
-        if (callback) {
-            callback(err);
-            callback = null;
-        }
-    }).on('end', function () {
-        if (callback) {
-            callback(null, entries);
-            callback = null;
-        }
-    });
-}
 
-function userCounter(callback) {
-    var users = 0;
-    udb.createReadStream().on('data', function (data) {
-        users++;
-    }).on('error', function (err) {
-        if (callback) {
-            callback(err);
-            callback = null;
-        }
-    }).on('end', function () {
-        if (callback) {
-            callback(null, users);
-            callback = null;
-        }
-    });
+function collectionCounter(collection, cb) {
+    var entries;
+    if(collection === "posts") {
+        postcol.find({},{},function(e,docs){
+            if (e) return cb(e);
+            entries = docs.length;
+            cb(null, entries);
+        });
+    }
+    if(collection === "users") {
+        usercol.find({},{},function(e,docs){
+            if (e) return cb(e);
+            entries = docs.length;
+            cb(null, entries);
+        });
+    }
 }
 
 function getNumPages(nEntries, perPage) {
@@ -44,13 +31,24 @@ function getNumPages(nEntries, perPage) {
 }
 
 function getPage(nPage, perPage, cb) {
-    var startKey = (nPage * perPage)-(perPage-1) //(1*2)-(2-1) = 2-(1) = 2-1 = 1
-    var endKey = nPage * perPage;
+    var startKey = (nPage * perPage)-(perPage-1) //(2*2)-(2-1) = 4-(1) = 4-1 = 3
     
-    startKey = 'post' + (startKey < 10 ? '0' : '') + startKey;
-    endKey = 'post' + (endKey < 10 ? '0' : '') + endKey;
-    var posts = [];
-
+    var pagePosts = [];
+    var count = startKey;
+    var skip = 1;
+    postcol.find({},{},function(e,docs){
+        docs.forEach(function(doc){
+            if(skip >= startKey) {
+                if (count < (startKey+perPage)) {
+                    pagePosts.push(doc);
+                    count++;
+                }
+            }
+            skip++;
+        });
+        cb(null, pagePosts);
+    });
+/*
     db.createReadStream({start: startKey, end: endKey})
     .on('data', function (data) {
         posts.push(JSON.parse(data.value));
@@ -60,14 +58,25 @@ function getPage(nPage, perPage, cb) {
     })
     .on('end', function () {
         cb(null, posts);
-    });
+    });*/
 }
 
 function writePost(title, author, text, callback) {
-    var post = {author: author, title: title, date: Date.now(), text: text};
+    postcol.insert({"author": author, "title": title, "date": Date.now(), "text": text},
+        function (err, doc) {
+            if (err) {
+                return callback(err);
+            }
+            else {
+                // And forward to success page
+                console.log('success');
+                callback();
+            }
+    });
+/*
     post = JSON.stringify(post);
     var key;
-    entryCounter(function(err, nEntries) {
+    postCounter(function(err, nEntries) {
         if(err) return callback(err);
         var next = nEntries+1;
         if(next < 10)
@@ -75,7 +84,7 @@ function writePost(title, author, text, callback) {
         else
             key = 'post'+next;
         db.put(key, post, callback);
-    });
+    });*/
 }
 
 function searchPost(crit, value, endDate, callback) {
@@ -83,6 +92,38 @@ function searchPost(crit, value, endDate, callback) {
         callback = endDate;
         endDate === null;
     }
+    if(crit === 'author') {
+        postcol.find({"author": value}, function(e,docs) {
+            if (e) return callback(e);
+            callback(null, docs);
+        });
+    }
+    if(crit === 'title') {
+        postcol.find({"title": value}, function(e,docs) {
+            if (e) return callback(e);
+            callback(null, docs);
+        });
+    }
+    if(crit === 'dateInit') {
+        var time = Number(value);
+        var endTime = Number(endDate);
+        if(endDate === undefined) {
+            postcol.find( {"date": { $gte: time } }, function(e,docs) {
+                if (e) return callback(e);
+                console.log(docs);
+                callback(null, docs);
+            });
+        }
+        else {
+            postcol.find( {"date": { $gte: time, $lte: endTime } }, function(e,docs) {
+                if (e) return callback(e);
+                callback(null, docs);
+            });
+        }
+    }
+
+
+/*
     var results = [];
     db.createReadStream().on('data', function (data) {
         var current = JSON.parse(data.value);
@@ -114,13 +155,24 @@ function searchPost(crit, value, endDate, callback) {
             callback(null, results);
             callback = null;
         }
-    });
+    });*/
 }
 
 function addUser(username, password, callback) {
     bcrypt.hash(password, 10, function(err, hash) {
         if(err) return callback(err);
-        var user = {username: username, hash: hash};
+        usercol.insert({"username": username, "hash": hash}, function (err, doc) {
+            if (err) {
+                // If it failed, return error
+                return callback(err);
+            }
+            else {
+                // And forward to success page
+                console.log('new user added');
+                callback();
+            }
+        });
+        /*
         user = JSON.stringify(user);
         userCounter(function(err, nUsers) {
             if(err) return callback(err);
@@ -130,18 +182,22 @@ function addUser(username, password, callback) {
             else
                 key = 'user'+next;
             udb.put(key, user, callback);
-        });
+        });*/
     });
-    // encrypt password here
-
-    
 }
 
 function authenticate(username, password, callback) {
 
-    
+    usercol.find({"username": username},{"hash": 1}, function(e,docs){
+        if (e) return callback(e);
+        bcrypt.compare(password, docs[0].hash, function(err, res) {
+            if (err) return callback(err);
+            if (res) callback(null, docs);
+            else callback(null, null);
+        });
+    });
     //encrypt password before authentication
-
+/*
     var stream = udb.createReadStream().on('data', function (data) {
         var current = JSON.parse(data.value);
         if(username === current.username) {
@@ -162,7 +218,7 @@ function authenticate(username, password, callback) {
         if (callback) {
             callback(null, null);
         }
-    }
+    }*/
 }
 
 module.exports.addUser = addUser;
@@ -170,5 +226,5 @@ module.exports.authenticate = authenticate;
 module.exports.searchPost = searchPost;
 module.exports.writePost = writePost;
 module.exports.getNum = getNumPages;
-module.exports.count = entryCounter;
+module.exports.count = collectionCounter;
 module.exports.getPage = getPage;

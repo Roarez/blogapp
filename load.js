@@ -1,36 +1,25 @@
-var level = require('level');
-var posts = require('./initial-posts');
-var db = level('/tmp/blogdb',{createIfMissing: true});
-var options = [];
+var mongo = require('mongodb');
+var monk = require('monk');
+var db = monk('localhost:27017/blogapp');
+var blogposts = require('./initial-posts');
+var data = [];
 
-for(var i = 1; i < posts.length+1; i++) {
-	var value = JSON.stringify(posts[i-1]);
-	var key = 'post'+(i < 10 ? "0" : "")+i;
-	var opt = {type: 'put', key: key, value: value};
-	options.push(opt);
+var collection = db.get("posts");
+
+for(var i = 1; i < blogposts.length+1; i++) {
+	var value = blogposts[i-1];
+	data.push(value);
 }
 
-db.createReadStream()
-	.on('data', function (data) {
-		console.log('deleting:', data.key);
-		db.del(data.key, function(err) {
-			if (err) throw err;
-			console.log('success');
-		});
-			})
-	.on('error', function (err) {
-		console.log('Oh my!', err)
-	})
-	.on('close', function () {
-		console.log('Stream closed')
-	})
-	.on('end', function () {
-		console.log('deleted all keys');
-		db.batch(options, function(err) {
-			if(err) throw err;
-			console.log('New keys in, closing database');
-		});
-		console.log('Stream ended');
-	})
+collection.remove({});
 
-
+collection.insert(data, function (err, doc) {
+	if (err) {
+		// If it failed, return error
+		throw err;
+	}
+	else {
+		// And forward to success page
+		console.log('success');
+	}
+});

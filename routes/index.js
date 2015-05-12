@@ -4,9 +4,9 @@ var operate = require('../operations.js');
 
 var pages;
 var POSTS_PER_PAGE = 4;
-operate.count(function(err, nEntries) {
+operate.count("posts", function(err, nEntries) {
 	if(err) throw err;
-	pages = operate.getNum(nEntries,POSTS_PER_PAGE);
+	pages = operate.getNum(nEntries, POSTS_PER_PAGE);
 });
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -33,7 +33,6 @@ router.get('/signup', function(req, res, next) {
 router.post('/signup', function(req, res) {
 	var username = req.body.username;
 	var password = req.body.password;
-	console.log('trying to sign in', req.body);
 	operate.addUser(username, password, function(err){
 		if(err) throw err;
 		res.redirect('/signin');
@@ -43,7 +42,7 @@ router.post('/signup', function(req, res) {
 router.post('/signin', function(req, res) {
 	var username = req.body.username;
 	var password = req.body.password;
-
+	console.log('trying to sign in', req.body);
 	operate.authenticate(username, password, function(err, user) {
 		if(err) throw err;
 		if(!user) {

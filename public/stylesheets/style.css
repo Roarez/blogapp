@@ -41,7 +41,7 @@ div.header-image {
     padding-top: 20px;
 }
 
-div.container, div.info {
+div.mydiv, div.info {
     width: 1480px;
     margin-right: auto;
     margin-left: auto;
