@@ -188,7 +188,7 @@
         position: 'bottom left',
 
         // automatically fit in the viewport even if it means repositioning from the position option
-        reposition: true,
+        reposition: false,
 
         // the default output format for `.toString()` and `field` value
         format: 'YYYY-MM-DD',

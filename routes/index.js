@@ -81,8 +81,9 @@ router.get('/search', function(req, res, next) {
 router.post('/search', function(req, res, next) {
 	var criteria = req.body.searchBy;
 	var value = req.body.textValue;
-	if(criteria === 'dateInit')
+	if(criteria === 'dateInit') {
 		value = req.body.initDate;
+	}
 	var endDate;
 	if(req.body.hasEnd === 'true')
 		endDate = req.body.endDate;
