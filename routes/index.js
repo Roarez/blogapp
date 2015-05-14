@@ -84,13 +84,19 @@ router.post('/search', function(req, res, next) {
 	if(criteria === 'dateInit') {
 		value = req.body.initDate;
 	}
-	var endDate;
-	if(req.body.hasEnd === 'true')
-		endDate = req.body.endDate;
-	operate.searchPost(criteria, value, endDate, function(err, results) {
-		if(err) throw err;
-		res.render('results', { title: 'Results', results: results, crit: criteria, val: value });
-	});
+	console.log('value:',value,'s');
+	if(value === ''){
+		res.redirect('/search');
+	}
+	else {
+		var endDate;
+		if(req.body.hasEnd === 'true')
+			endDate = req.body.endDate;
+		operate.searchPost(criteria, value, endDate, function(err, results) {
+			if(err) throw err;
+			res.render('results', { title: 'Results', results: results, crit: criteria, val: value });
+		});
+	}
 });
 
 module.exports = router;
