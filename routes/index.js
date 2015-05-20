@@ -4,7 +4,7 @@ var operate = require('../operations.js');
 
 var pages;
 var POSTS_PER_PAGE = 4;
-operate.count("posts", function(err, nEntries) {
+operate.count("posts", function(err, nEntries) { // might have to put inside router.post('/write') to update num of pages
 	if(err) throw err;
 	pages = operate.getNum(nEntries, POSTS_PER_PAGE);
 });
@@ -31,28 +31,41 @@ router.get('/signup', function(req, res, next) {
 });
 
 router.post('/signup', function(req, res) {
-	var username = req.body.username;
-	var password = req.body.password;
-	operate.addUser(username, password, function(err){
-		if(err) throw err;
-		res.redirect('/signin');
-	});
+	if(!req.body.username || !req.body.password) {
+		res.render('signup', { title: 'Sign up', e: 'Invalid Username/Password'});
+	}
+	else {
+		var username = req.body.username;
+		var password = req.body.password;
+		operate.addUser(username, password, function(err){
+			if(err) throw err;
+			res.redirect('/signin');
+		});
+	}
 });
 
 router.post('/signin', function(req, res) {
-	var username = req.body.username;
-	var password = req.body.password;
-	console.log('trying to sign in', req.body);
-	operate.authenticate(username, password, function(err, user) {
-		if(err) throw err;
-		if(!user) {
-			res.redirect('/signin');
-		}
-		else {
-			res.cookie('name', username, { expires: new Date(Date.now() + 900000), signed: true});
-			res.redirect('/');
-		}
-	});
+	if(!req.body.username || !req.body.password) {
+		res.render('signin', { title: 'Sign in', e: 'Invalid Username/Password'});
+	}
+	else {
+		var username = req.body.username;
+		var password = req.body.password;
+		console.log('trying to sign in', req.body);
+		operate.authenticate(username, password, function(err, user) {
+			if(err) throw err;
+			if(!user) {
+				res.render('signin', { title: 'Sign in', e: 'Incorrect Password'});
+			}
+			else if(user.length === 0) {
+				res.render('signin', { title: 'Sign in', e: 'No user by that name'});
+			}
+			else {
+				res.cookie('name', username, { expires: new Date(Date.now() + 900000), signed: true});
+				res.redirect('/');
+			}
+		});
+	}
 });
 
 router.get('/logout', function(req, res, next) {
@@ -65,13 +78,22 @@ router.get('/write', function(req, res, next) {
 });
 
 router.post('/write', function(req, res) {
-	var title = req.body.title;
-	var author = req.body.author;
-	var text = req.body.post_text;
-	operate.writePost(title, author, text, function(err) {
-		if(err) throw err;
-		res.redirect('/write');
-	});
+	if(!req.body.title || !req.body.author || !req.body.post_text) {
+		res.render('write', { title: 'Write', e: 'Post must have a Title, Author and some text' });
+	}
+	else {
+		var title = req.body.title;
+		var author = req.body.author;
+		var text = req.body.post_text;
+		operate.writePost(title, author, text, function(err) {
+			if(err) throw err;
+			operate.count("posts", function(err, nEntries) {
+				if(err) throw err;
+				pages = operate.getNum(nEntries, POSTS_PER_PAGE);
+			});
+			res.redirect('/write');
+		});
+	}
 });
 
 router.get('/search', function(req, res, next) {
@@ -86,7 +108,7 @@ router.post('/search', function(req, res, next) {
 	}
 	console.log('value:',value,'s');
 	if(value === ''){
-		res.redirect('/search');
+		res.render('search', { title: 'Search', e: 'Please choose a criteria and apropriate value'});
 	}
 	else {
 		var endDate;

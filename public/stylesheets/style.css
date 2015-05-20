@@ -15,6 +15,7 @@ img {
 a {
     color: #00B7FF;
 }
+
 #wrap {
     min-height: 100%;
     height: auto !important;
@@ -70,4 +71,9 @@ div.mydiv, div.info {
   border: 2px solid coral;
   padding: 5px;
   border-radius: 12px;
+}
+
+h5 {
+    font-style: italic;
+    color: darkred;
 }
